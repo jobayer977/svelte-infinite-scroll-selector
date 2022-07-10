@@ -2,7 +2,7 @@
 	"name": "svelte-infinite-scroll-selector",
 	"version": "1.0.0",
 	"description": "",
-	"main": "index.js",
+	"main": "src/index.js",
 	"scripts": {
 		"build": "rollup -c",
 		"dev": "rollup -c -w"
