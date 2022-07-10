@@ -1,137 +1,141 @@
-export type Event = 'change' | 'leave' | 'enter' | 'init';
+export type Event = 'change' | 'leave' | 'enter' | 'init'
 
 export type Options = {
-	root?: HTMLElement | null;
-	rootMargin?: string;
-	threshold?: number | number[];
-	unobserveOnEnter?: boolean;
-};
+	root?: HTMLElement | null
+	rootMargin?: string
+	threshold?: number | number[]
+	unobserveOnEnter?: boolean
+}
 
 export type Position = {
-	x?: number;
-	y?: number;
-};
+	x?: number
+	y?: number
+}
 
 // Types below needs to be manually copied to additional-svelte.jsx.d.ts file - more details there
-type Direction = 'up' | 'down' | 'left' | 'right';
+type Direction = 'up' | 'down' | 'left' | 'right'
 
 export type ScrollDirection = {
-	vertical?: Direction;
-	horizontal?: Direction;
-};
+	vertical?: Direction
+	horizontal?: Direction
+}
 
 export type ObserverEventDetails = {
-	inView: boolean;
-	entry: IntersectionObserverEntry;
-	scrollDirection: ScrollDirection;
-	node: HTMLElement;
-	observer: IntersectionObserver;
-};
+	inView: boolean
+	entry: IntersectionObserverEntry
+	scrollDirection: ScrollDirection
+	node: HTMLElement
+	observer: IntersectionObserver
+}
 
 export type LifecycleEventDetails = {
-	node: HTMLElement;
-	observer: IntersectionObserver;
-};
+	node: HTMLElement
+	observer: IntersectionObserver
+}
 
 const defaultOptions: Options = {
 	root: null,
 	rootMargin: '0px',
 	threshold: 0,
-	unobserveOnEnter: false
-};
+	unobserveOnEnter: false,
+}
 
-const createEvent = <T = ObserverEventDetails>(name: Event, detail: T): CustomEvent<T> =>
-	new CustomEvent(name, { detail });
+const createEvent = <T = ObserverEventDetails>(
+	name: Event,
+	detail: T
+): CustomEvent<T> => new CustomEvent(name, { detail })
 
 export function inview(node: HTMLElement, options: Options = {}) {
 	const { root, rootMargin, threshold, unobserveOnEnter }: Options = {
 		...defaultOptions,
-		...options
-	};
+		...options,
+	}
 
 	let prevPos: Position = {
 		x: undefined,
-		y: undefined
-	};
+		y: undefined,
+	}
 
 	let scrollDirection: ScrollDirection = {
 		vertical: undefined,
-		horizontal: undefined
-	};
+		horizontal: undefined,
+	}
 
 	if (typeof IntersectionObserver !== 'undefined' && node) {
 		const observer = new IntersectionObserver(
 			(entries, _observer) => {
 				entries.forEach((singleEntry) => {
 					if (prevPos.y > singleEntry.boundingClientRect.y) {
-						scrollDirection.vertical = 'up';
+						scrollDirection.vertical = 'up'
 					} else {
-						scrollDirection.vertical = 'down';
+						scrollDirection.vertical = 'down'
 					}
 
 					if (prevPos.x > singleEntry.boundingClientRect.x) {
-						scrollDirection.horizontal = 'left';
+						scrollDirection.horizontal = 'left'
 					} else {
-						scrollDirection.horizontal = 'right';
+						scrollDirection.horizontal = 'right'
 					}
 
 					prevPos = {
 						y: singleEntry.boundingClientRect.y,
-						x: singleEntry.boundingClientRect.x
-					};
+						x: singleEntry.boundingClientRect.x,
+					}
 
 					const detail: ObserverEventDetails = {
 						inView: singleEntry.isIntersecting,
 						entry: singleEntry,
 						scrollDirection,
 						node,
-						observer: _observer
-					};
+						observer: _observer,
+					}
 
-					node.dispatchEvent(createEvent('change', detail));
+					node.dispatchEvent(createEvent('change', detail))
 
 					if (singleEntry.isIntersecting) {
-						node.dispatchEvent(createEvent('enter', detail));
+						node.dispatchEvent(createEvent('enter', detail))
 
-						unobserveOnEnter && _observer.unobserve(node);
+						unobserveOnEnter && _observer.unobserve(node)
 					} else {
-						node.dispatchEvent(createEvent('leave', detail));
+						node.dispatchEvent(createEvent('leave', detail))
 					}
-				});
+				})
 			},
 			{
 				root,
 				rootMargin,
-				threshold
+				threshold,
 			}
-		);
+		)
 
 		// This dispatcher has to be wrapped in setTimeout, as it won't work otherwise.
 		// Not sure why is it happening, maybe a callstack has to pass between the listeners?
 		// Definitely something to investigate to understand better.
 		setTimeout(() => {
-			node.dispatchEvent(createEvent<LifecycleEventDetails>('init', { observer, node }));
-		}, 0);
+			node.dispatchEvent(
+				createEvent<LifecycleEventDetails>('init', { observer, node })
+			)
+		}, 0)
 
-		observer.observe(node);
+		observer.observe(node)
 
 		return {
 			destroy() {
-				observer.unobserve(node);
-			}
-		};
+				observer.unobserve(node)
+			},
+		}
 	}
 }
 export function clickOutside(node) {
 	const handleClick = (event) => {
 		if (node && !node.contains(event.target) && !event.defaultPrevented) {
-			node.dispatchEvent(new CustomEvent('click_outside', node));
+			node.dispatchEvent(new CustomEvent('click_outside', node))
 		}
-	};
-	document.addEventListener('click', handleClick, true);
+	}
+	document.addEventListener('click', handleClick, true)
 	return {
 		destroy() {
-			document.removeEventListener('click', handleClick, true);
-		}
-	};
+			document.removeEventListener('click', handleClick, true)
+		},
+	}
 }

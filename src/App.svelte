@@ -35,6 +35,11 @@
 		dispatch('change', value)
 		isExpanded = false
 	}
+	function removeDuplicateObject(array: any[], key: string) {
+		return array.filter((obj, index, self) => {
+			return self.findIndex((t) => t[key] === obj[key]) === index
+		})
+	}
 </script>
 
 <div
@@ -116,9 +121,9 @@
 					/>
 				</div>
 			</div>
-			{#if options?.length > 0 && !loading}
+			{#if options?.length > 0}
 				<ul>
-					{#each options as item}
+					{#each removeDuplicateObject(options, 'label') as item}
 						<li
 							class:active={JSON.stringify(item) ===
 								JSON.stringify(value?.value)}
@@ -237,6 +242,7 @@
 		font-weight: 500;
 		font-size: 14px;
 		cursor: pointer;
+		border-radius: 30px;
 	}
 	.options {
 		line-height: 1.28571;
@@ -289,7 +295,7 @@
 		color: #212121;
 		background: #eff0f5;
 	}
-	li .focues {
+	li.focues {
 		color: #212121;
 		background: #eff0f5;
 	}
